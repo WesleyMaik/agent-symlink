@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  determineLinkType,
-  normalizeLinkPath,
-  canCreateSymlink,
-  isWindows
-} from '../../src/core/platform.js';
+import { determineLinkType, normalizeLinkPath, canCreateSymlink } from '../../src/core/platform.js';
 
 describe('platform utilities', () => {
   it('should normalize backslashes to forward slashes', () => {
@@ -14,11 +9,7 @@ describe('platform utilities', () => {
 
   it('should determine link type correctly', () => {
     expect(determineLinkType(false)).toBe('file');
-    if (isWindows) {
-      expect(determineLinkType(true)).toBe('junction');
-    } else {
-      expect(determineLinkType(true)).toBe('dir');
-    }
+    expect(determineLinkType(true)).toBe('dir');
   });
 
   it('should check symlink capability on current environment', async () => {
