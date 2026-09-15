@@ -1,11 +1,12 @@
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import { inspectPath } from '../core/inspector.js';
+import type { LinkOptions } from '../types/index.js';
 
 /**
  * Interactive flow for inspecting a symlink path.
  */
-export async function runInspectFlow(): Promise<void> {
+export async function runInspectFlow(options: LinkOptions = {}): Promise<void> {
   const targetInput = await p.text({
     message: 'Path to inspect:',
     placeholder: 'CLAUDE.md',
@@ -17,7 +18,7 @@ export async function runInspectFlow(): Promise<void> {
     return;
   }
 
-  const result = await inspectPath(targetInput.trim());
+  const result = await inspectPath(targetInput.trim(), options);
 
   if (!result.exists) {
     p.log.warn(`Path "${targetInput}" does not exist.`);
@@ -25,7 +26,9 @@ export async function runInspectFlow(): Promise<void> {
   }
 
   if (!result.isSymlink) {
-    p.log.info(`Path "${targetInput}" is a regular ${result.status === 'regular_dir' ? 'directory' : 'file'}, not a symlink.`);
+    p.log.info(
+      `Path "${targetInput}" is a regular ${result.status === 'regular_dir' ? 'directory' : 'file'}, not a symlink.`
+    );
     return;
   }
 
