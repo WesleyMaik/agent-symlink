@@ -6,6 +6,9 @@ import { handleLinkCommand, type CliLinkOptions } from './commands/link.js';
 import { handlePresetCommand, type CliPresetOptions } from './commands/preset.js';
 import { handleSkillsCommand, type CliSkillsOptions } from './commands/skills.js';
 import { handleRulesCommand, type CliRulesOptions } from './commands/rules.js';
+import { handleInspectCommand, type CliInspectOptions } from './commands/inspect.js';
+import { handleUnlinkCommand, type CliUnlinkOptions } from './commands/unlink.js';
+import { handleDoctorCommand, type CliDoctorOptions } from './commands/doctor.js';
 import { runInteractive } from './interactive/runner.js';
 
 const program = new Command();
@@ -124,6 +127,49 @@ program
     const globalOptions = program.opts<CliRulesOptions>();
     const opts: CliRulesOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
     const exitCode = await handleRulesCommand(target, opts);
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  });
+
+program
+  .command('inspect <target>')
+  .description('Inspect target path, symlink destination, and link validity')
+  .option('--cwd <path>', 'Resolve relative paths from another working directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .action(async (target: string, cmdOptions?: CliInspectOptions) => {
+    const globalOptions = program.opts<CliInspectOptions>();
+    const opts: CliInspectOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
+    const exitCode = await handleInspectCommand(target, opts);
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  });
+
+program
+  .command('unlink <target>')
+  .description('Safely remove a symbolic link without touching the linked source')
+  .option('-d, --dry-run', 'Show what would be removed without deleting')
+  .option('--cwd <path>', 'Resolve relative paths from another working directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .action(async (target: string, cmdOptions?: CliUnlinkOptions) => {
+    const globalOptions = program.opts<CliUnlinkOptions>();
+    const opts: CliUnlinkOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
+    const exitCode = await handleUnlinkCommand(target, opts);
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  });
+
+program
+  .command('doctor')
+  .description('Inspect system environment, symlink permissions, and repository configuration')
+  .option('--cwd <path>', 'Run diagnostics for specified directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .action(async (cmdOptions?: CliDoctorOptions) => {
+    const globalOptions = program.opts<CliDoctorOptions>();
+    const opts: CliDoctorOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
+    const exitCode = await handleDoctorCommand(opts);
     if (exitCode !== 0) {
       process.exitCode = exitCode;
     }
