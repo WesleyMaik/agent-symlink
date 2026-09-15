@@ -37,4 +37,8 @@ describe('paths resolution', () => {
     expect(() => resolvePaths('AGENTS.md', 'AGENTS.md')).toThrow(CircularLinkError);
     expect(() => resolvePaths('./AGENTS.md', 'AGENTS.md')).toThrow(CircularLinkError);
   });
+
+  it.skipIf(process.platform === 'win32')('should preserve distinct case-sensitive paths', () => {
+    expect(resolvePaths('AGENTS.md', 'agents.md').linkValue).toBe('AGENTS.md');
+  });
 });

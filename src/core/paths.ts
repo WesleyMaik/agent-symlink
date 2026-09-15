@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { normalizeLinkPath } from './platform.js';
 import { InvalidPathError, CircularLinkError } from '../utils/errors.js';
 
@@ -27,7 +28,7 @@ export function resolvePaths(
   const sourceAbsolute = path.resolve(workingDir, source);
   const targetAbsolute = path.resolve(workingDir, target);
 
-  if (sourceAbsolute.toLowerCase() === targetAbsolute.toLowerCase()) {
+  if (path.relative(sourceAbsolute, targetAbsolute) === '') {
     throw new CircularLinkError(source, target);
   }
 
@@ -45,4 +46,49 @@ export function resolvePaths(
     targetAbsolute,
     linkValue
   };
+}
+
+/**
+ * Resolves existing symlink components while retaining missing path components.
+ * Dependencies include intermediate links so replacement can preserve the entire source chain.
+ */
+export async function resolvePhysicalPath(
+  filePath: string,
+  dependencies: Set<string> = new Set(),
+  symlinks: Set<string> = new Set()
+): Promise<string> {
+  const parent = path.dirname(filePath);
+  if (parent === filePath) return fs.realpath(filePath);
+
+  const physicalParent = await resolvePhysicalPath(parent, dependencies, symlinks);
+  const physicalPath = path.join(physicalParent, path.basename(filePath));
+  dependencies.add(physicalPath);
+
+  try {
+    const stats = await fs.lstat(physicalPath);
+    if (!stats.isSymbolicLink()) return fs.realpath(physicalPath);
+
+    if (symlinks.has(physicalPath) || symlinks.size >= 40) {
+      throw new CircularLinkError(filePath, physicalPath);
+    }
+    const nextLinks = new Set(symlinks).add(physicalPath);
+    const linkValue = await fs.readlink(physicalPath);
+    return resolvePhysicalPath(path.resolve(physicalParent, linkValue), dependencies, nextLinks);
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+      return physicalPath;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Checks path containment using the host platform's path comparison semantics.
+ */
+export function isPathWithin(parent: string, candidate: string): boolean {
+  const relative = path.relative(parent, candidate);
+  return (
+    relative === '' ||
+    (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`))
+  );
 }

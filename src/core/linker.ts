@@ -1,7 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { LinkOptions, LinkResult, LinkType, UnlinkOptions, UnlinkResult } from '../types/index.js';
-import { resolvePaths } from './paths.js';
+import { randomUUID } from 'node:crypto';
+import type {
+  LinkOptions,
+  LinkResult,
+  LinkType,
+  UnlinkOptions,
+  UnlinkResult
+} from '../types/index.js';
+import { isPathWithin, resolvePaths, resolvePhysicalPath } from './paths.js';
 import { determineLinkType, normalizeLinkPath } from './platform.js';
 import {
   PlatformPrivilegeError,
@@ -9,6 +16,7 @@ import {
   SymlinkError,
   TargetExistsError
 } from '../utils/errors.js';
+import { CircularLinkError } from '../utils/errors.js';
 
 interface StatsResult {
   readonly exists: boolean;
@@ -16,14 +24,12 @@ interface StatsResult {
   readonly isSymbolicLink: boolean;
 }
 
-async function getPathStats(filePath: string): Promise<StatsResult> {
+async function getPathStats(filePath: string, followSymlinks = false): Promise<StatsResult> {
   try {
-    const lstats = await fs.lstat(filePath);
+    const lstats = await (followSymlinks ? fs.stat(filePath) : fs.lstat(filePath));
     return {
       exists: true,
       isDirectory: lstats.isDirectory(),
-      // In Node.js on Windows, directory junctions report isSymbolicLink() === false in some versions or true in others,
-      // but lstats.isSymbolicLink() or isDirectory() with junction can be verified.
       isSymbolicLink: lstats.isSymbolicLink()
     };
   } catch (error: unknown) {
@@ -47,12 +53,16 @@ export async function createLink(
   target: string,
   options: LinkOptions = {}
 ): Promise<LinkResult> {
-  const { sourceAbsolute, targetAbsolute, linkValue } = resolvePaths(source, target, {
+  const { sourceAbsolute, targetAbsolute } = resolvePaths(source, target, {
     cwd: options.cwd,
     absolute: options.absolute
   });
 
-  const sourceStats = await getPathStats(sourceAbsolute);
+  const physicalTargetParent = await resolvePhysicalPath(path.dirname(targetAbsolute));
+  const physicalTarget = path.join(physicalTargetParent, path.basename(targetAbsolute));
+  const sourceDependencies = new Set<string>();
+  const physicalSource = await resolvePhysicalPath(sourceAbsolute, sourceDependencies);
+  const sourceStats = await getPathStats(sourceAbsolute, true);
 
   if (!sourceStats.exists && !options.allowDangling) {
     throw new SourceNotFoundError(source);
@@ -63,14 +73,25 @@ export async function createLink(
 
   const targetStats = await getPathStats(targetAbsolute);
 
+  if (
+    [...sourceDependencies].some((dependency) => isPathWithin(physicalTarget, dependency)) ||
+    isPathWithin(physicalSource, physicalTarget) ||
+    (targetStats.exists &&
+      !targetStats.isSymbolicLink &&
+      isPathWithin(await fs.realpath(targetAbsolute), physicalSource))
+  ) {
+    throw new CircularLinkError(source, target);
+  }
+
+  const physicalSourceParent = await resolvePhysicalPath(path.dirname(sourceAbsolute));
+  const sourceEntry = path.join(physicalSourceParent, path.basename(sourceAbsolute));
+  const linkValue = options.absolute
+    ? sourceAbsolute
+    : normalizeLinkPath(path.relative(physicalTargetParent, sourceEntry));
+
   if (targetStats.exists) {
     if (targetStats.isSymbolicLink) {
-      let existingTarget = '';
-      try {
-        existingTarget = await fs.readlink(targetAbsolute);
-      } catch {
-        // Could not read link, proceed to replacement if forced
-      }
+      const existingTarget = await fs.readlink(targetAbsolute);
 
       const normalizedExisting = normalizeLinkPath(existingTarget);
       const normalizedDesired = normalizeLinkPath(linkValue);
@@ -101,8 +122,7 @@ export async function createLink(
         };
       }
 
-      await fs.unlink(targetAbsolute);
-      await createSymlinkNode(linkValue, targetAbsolute, linkType);
+      await replaceWithSymlink(linkValue, targetAbsolute, linkType, false);
 
       return {
         status: 'replaced',
@@ -115,10 +135,7 @@ export async function createLink(
     }
 
     if (!options.force) {
-      throw new TargetExistsError(
-        target,
-        targetStats.isDirectory ? 'directory' : 'file'
-      );
+      throw new TargetExistsError(target, targetStats.isDirectory ? 'directory' : 'file');
     }
 
     if (options.dryRun) {
@@ -132,13 +149,7 @@ export async function createLink(
       };
     }
 
-    if (targetStats.isDirectory) {
-      await fs.rm(targetAbsolute, { recursive: true, force: true });
-    } else {
-      await fs.unlink(targetAbsolute);
-    }
-
-    await createSymlinkNode(linkValue, targetAbsolute, linkType);
+    await replaceWithSymlink(linkValue, targetAbsolute, linkType, targetStats.isDirectory);
 
     return {
       status: 'replaced',
@@ -174,6 +185,51 @@ export async function createLink(
     type: linkType,
     message: `Created symlink "${target}" -> "${linkValue}".`
   };
+}
+
+/**
+ * Stages the new link beside its destination so relative targets stay valid.
+ * The original is retained until installation succeeds and restored on failure.
+ */
+async function replaceWithSymlink(
+  linkValue: string,
+  targetAbsolute: string,
+  linkType: LinkType,
+  replacesDirectory: boolean
+): Promise<void> {
+  const prefix = path.join(path.dirname(targetAbsolute), `.symlink-${randomUUID()}`);
+  const staged = `${prefix}-new`;
+  const backup = `${prefix}-backup`;
+
+  await createSymlinkNode(linkValue, staged, linkType);
+  try {
+    await fs.rename(targetAbsolute, backup);
+    try {
+      await fs.rename(staged, targetAbsolute);
+    } catch (error: unknown) {
+      try {
+        await fs.rename(backup, targetAbsolute);
+      } catch (restoreError: unknown) {
+        throw new AggregateError(
+          [error, restoreError],
+          `Replacement failed. Recover the original target from "${backup}".`
+        );
+      }
+      throw error;
+    }
+  } finally {
+    await fs.unlink(staged).catch((error: unknown) => {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT')
+        return;
+      throw error;
+    });
+  }
+
+  if (replacesDirectory) {
+    await fs.rm(backup, { recursive: true });
+  } else {
+    await fs.unlink(backup);
+  }
 }
 
 async function createSymlinkNode(

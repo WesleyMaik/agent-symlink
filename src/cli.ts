@@ -43,7 +43,7 @@ program
 
     if (!source && !target) {
       if (process.stdin.isTTY && !opts.json) {
-        await runInteractive();
+        await runInteractive(opts);
         return;
       }
       program.help();

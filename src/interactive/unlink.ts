@@ -2,11 +2,12 @@ import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import { removeLink } from '../core/linker.js';
 import { inspectPath } from '../core/inspector.js';
+import type { UnlinkOptions } from '../types/index.js';
 
 /**
  * Interactive flow for removing a symbolic link.
  */
-export async function runUnlinkFlow(): Promise<void> {
+export async function runUnlinkFlow(options: UnlinkOptions = {}): Promise<void> {
   const targetInput = await p.text({
     message: 'Symlink path to remove:',
     placeholder: 'CLAUDE.md',
@@ -18,7 +19,7 @@ export async function runUnlinkFlow(): Promise<void> {
     return;
   }
 
-  const inspected = await inspectPath(targetInput.trim());
+  const inspected = await inspectPath(targetInput.trim(), options);
 
   if (!inspected.exists) {
     p.log.warn(`Path "${targetInput}" does not exist.`);
@@ -43,9 +44,11 @@ export async function runUnlinkFlow(): Promise<void> {
   }
 
   try {
-    const result = await removeLink(targetInput.trim());
+    const result = await removeLink(targetInput.trim(), options);
     if (result.removed) {
-      p.log.success(`${pc.green('✓')} Successfully removed symlink "${targetInput}". Linked source was untouched.`);
+      p.log.success(
+        `${pc.green('✓')} Successfully removed symlink "${targetInput}". Linked source was untouched.`
+      );
     } else {
       p.log.info(`Nothing removed: ${result.message}`);
     }

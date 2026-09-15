@@ -19,7 +19,10 @@ export function normalizeLinkPath(linkPath: string): string {
  */
 export async function canCreateSymlink(testDirectory?: string): Promise<boolean> {
   const dir = testDirectory ?? os.tmpdir();
-  const testSrc = path.join(dir, `.symlink_test_src_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+  const testSrc = path.join(
+    dir,
+    `.symlink_test_src_${Date.now()}_${Math.random().toString(36).slice(2)}`
+  );
   const testDest = `${testSrc}_link`;
 
   try {
@@ -46,5 +49,5 @@ export function determineLinkType(isDirectory: boolean): LinkType {
   if (!isDirectory) {
     return 'file';
   }
-  return isWindows ? 'junction' : 'dir';
+  return 'dir';
 }

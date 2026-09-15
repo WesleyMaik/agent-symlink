@@ -3,11 +3,12 @@ import pc from 'picocolors';
 import { getInstructionTargetOptions } from '../registry/agents.js';
 import { createLink } from '../core/linker.js';
 import { TargetExistsError } from '../utils/errors.js';
+import type { LinkOptions } from '../types/index.js';
 
 /**
  * Interactive flow for linking instruction files.
  */
-export async function runInstructionsFlow(): Promise<void> {
+export async function runInstructionsFlow(options: LinkOptions = {}): Promise<void> {
   const sourceInput = await p.text({
     message: 'Canonical instruction file:',
     placeholder: 'AGENTS.md',
@@ -63,8 +64,10 @@ export async function runInstructionsFlow(): Promise<void> {
 
   for (const target of targets) {
     try {
-      const result = await createLink(sourceInput.trim(), target);
-      if (result.status === 'already_linked') {
+      const result = await createLink(sourceInput.trim(), target, options);
+      if (result.status === 'would_create' || result.status === 'would_replace') {
+        p.log.info(result.message ?? 'Dry run: Link preview completed.');
+      } else if (result.status === 'already_linked') {
         p.log.info(`${pc.blue('ℹ')} ${target} already points to ${result.linkValue}`);
       } else {
         p.log.success(`${pc.green('✓')} ${target} -> ${result.linkValue}`);
@@ -82,8 +85,12 @@ export async function runInstructionsFlow(): Promise<void> {
           continue;
         }
         s.start(`Overwriting ${target}...`);
-        const result = await createLink(sourceInput.trim(), target, { force: true });
-        p.log.success(`${pc.yellow('✓')} Replaced: ${target} -> ${result.linkValue}`);
+        const result = await createLink(sourceInput.trim(), target, { ...options, force: true });
+        if (options.dryRun) {
+          p.log.info(result.message ?? 'Dry run: Replacement preview completed.');
+        } else {
+          p.log.success(`${pc.yellow('✓')} Replaced: ${target} -> ${result.linkValue}`);
+        }
       } else {
         const message = error instanceof Error ? error.message : String(error);
         p.log.error(`Failed to link ${target}: ${message}`);
