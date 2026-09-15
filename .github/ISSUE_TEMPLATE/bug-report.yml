@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report an issue or unexpected behavior in Symlink CLI
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the fields below so we can diagnose and resolve the issue quickly.
+  - type: input
+    id: version
+    attributes:
+      label: CLI Version
+      description: What version of symlink are you running? (Run `symlink --version`)
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment & Node.js Version
+      description: Output of `node -v` and your Operating System (e.g. Windows 11, macOS Sequoia, Ubuntu 24.04)
+      placeholder: Node v24.0.0 on macOS Sequoia
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command Executed
+      description: The exact command line string executed.
+      placeholder: symlink AGENTS.md CLAUDE.md
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior / Error Message
+      description: What happened instead? Please paste any error output or stack traces.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction Steps
+      description: Step-by-step instructions to reproduce the problem.
+      placeholder: |
+        1. Create AGENTS.md
+        2. Run symlink AGENTS.md CLAUDE.md
+        3. See error
+    validations:
+      required: true

@@ -1,0 +1,45 @@
+name: Feature Request
+description: Suggest an idea or new agent compatibility preset
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement or new feature for Symlink CLI!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem or limitation? Please describe.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent / Tool Involved
+      description: If this involves a new AI agent, specify the tool name and website or documentation link.
+      placeholder: e.g. Void Editor, Roo Code, Amp
+    validations:
+      required: false
+  - type: textarea
+    id: paths
+    attributes:
+      label: Expected Path Conventions
+      description: What file paths or directory conventions does this tool expect? (e.g. `.void/rules/*.md`)
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you have considered.
+    validations:
+      required: false
