@@ -3,6 +3,6 @@ import { VERSION } from '../../src/index.js';
 
 describe('Bootstrap', () => {
   it('should export the initial version', () => {
-    expect(VERSION).toBe('0.1.0');
+    expect(VERSION).toBe('1.0.0');
   });
 });

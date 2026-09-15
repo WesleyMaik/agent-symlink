@@ -21,7 +21,7 @@ describe('CLI direct command execution', () => {
 
   it('should print version with --version flag', async () => {
     const { stdout } = await execFileAsync('node', [cliPath, '--version']);
-    expect(stdout.trim()).toBe('0.1.0');
+    expect(stdout.trim()).toBe('1.0.0');
   });
 
   it('should print help with --help flag', async () => {
