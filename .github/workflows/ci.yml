@@ -35,11 +35,11 @@ jobs:
       - name: Run Type Check
         run: pnpm typecheck
 
-      - name: Run Tests
-        run: pnpm test
-
       - name: Run Build
         run: pnpm build
+
+      - name: Run Tests
+        run: pnpm test
 
       - name: Verify CLI Smoke Test (--help)
         run: node dist/cli.js --help
