@@ -5,13 +5,13 @@
 	"type": "module",
 	"license": "MIT",
 	"author": "Wesley Maik",
-	"homepage": "https://github.com/WesleyMaik/symlink#readme",
+	"homepage": "https://github.com/WesleyMaik/agent-symlink#readme",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/WesleyMaik/symlink.git"
+		"url": "git+https://github.com/WesleyMaik/agent-symlink.git"
 	},
 	"bugs": {
-		"url": "https://github.com/WesleyMaik/symlink/issues"
+		"url": "https://github.com/WesleyMaik/agent-symlink/issues"
 	},
 	"keywords": [
 		"symlink",

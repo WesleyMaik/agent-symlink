@@ -55,6 +55,7 @@ npx @agent-symlink/cli --help
 ## Quick Start
 
 ### 1. Interactive Mode
+
 Run `symlink` without arguments in your terminal:
 
 ```bash
@@ -66,16 +67,19 @@ Select what you want to link (instructions, skills, rules, or agent presets) and
 ### 2. Direct Linking
 
 Link your root `AGENTS.md` to Claude Code's expected file:
+
 ```bash
 symlink AGENTS.md CLAUDE.md
 ```
 
 Link to a nested directory (the CLI automatically computes the relative path `../AGENTS.md`):
+
 ```bash
 symlink AGENTS.md .github/copilot-instructions.md
 ```
 
 Link a shared skills directory:
+
 ```bash
 symlink .agents/skills .claude/skills
 ```
@@ -83,6 +87,7 @@ symlink .agents/skills .claude/skills
 ### 3. Agent Presets
 
 Apply a single agent preset:
+
 ```bash
 symlink preset claude
 symlink preset gemini
@@ -90,6 +95,7 @@ symlink preset copilot
 ```
 
 Apply all compatible presets at once:
+
 ```bash
 symlink preset all
 ```
@@ -100,25 +106,26 @@ symlink preset all
 
 ## Agent Compatibility Matrix
 
-| Agent / Tool | Native Instruction Format | Root `AGENTS.md` Support | Symlink Required |
-| :--- | :--- | :---: | :---: |
-| **OpenAI Codex** | `AGENTS.md` | Yes | No |
-| **Cursor** | `AGENTS.md` or `.cursor/rules/` | Yes | No |
-| **Windsurf** | `AGENTS.md` or `.windsurf/rules/` | Yes | No |
-| **Cline** | `AGENTS.md` or `.clinerules/` | Yes | No |
-| **Zed Agent** | `AGENTS.md` | Yes | No |
-| **JetBrains Junie** | `AGENTS.md` | Yes | No |
-| **Claude Code** | `CLAUDE.md` | No | **Yes** (`CLAUDE.md`) |
-| **Gemini CLI** | `GEMINI.md` | Configurable | **Recommended** (`GEMINI.md`) |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | Surface dependent | **Recommended** (`.github/copilot-instructions.md`) |
-| **Amazon Q Developer** | `.amazonq/rules/*.md` | No | **Recommended** (`.amazonq/rules/AGENTS.md`) |
-| **Continue** | `.continue/rules/*.md` | No | **Recommended** (`.continue/rules/AGENTS.md`) |
+| Agent / Tool           | Native Instruction Format         | Root `AGENTS.md` Support |                  Symlink Required                   |
+| :--------------------- | :-------------------------------- | :----------------------: | :-------------------------------------------------: |
+| **OpenAI Codex**       | `AGENTS.md`                       |           Yes            |                         No                          |
+| **Cursor**             | `AGENTS.md` or `.cursor/rules/`   |           Yes            |                         No                          |
+| **Windsurf**           | `AGENTS.md` or `.windsurf/rules/` |           Yes            |                         No                          |
+| **Cline**              | `AGENTS.md` or `.clinerules/`     |           Yes            |                         No                          |
+| **Zed Agent**          | `AGENTS.md`                       |           Yes            |                         No                          |
+| **JetBrains Junie**    | `AGENTS.md`                       |           Yes            |                         No                          |
+| **Claude Code**        | `CLAUDE.md`                       |            No            |                **Yes** (`CLAUDE.md`)                |
+| **Gemini CLI**         | `GEMINI.md`                       |       Configurable       |            **Recommended** (`GEMINI.md`)            |
+| **GitHub Copilot**     | `.github/copilot-instructions.md` |    Surface dependent     | **Recommended** (`.github/copilot-instructions.md`) |
+| **Amazon Q Developer** | `.amazonq/rules/*.md`             |            No            |    **Recommended** (`.amazonq/rules/AGENTS.md`)     |
+| **Continue**           | `.continue/rules/*.md`            |            No            |    **Recommended** (`.continue/rules/AGENTS.md`)    |
 
 ---
 
 ## Skills and Rules Linking
 
 ### Skills Directories
+
 The recommended cross-agent canonical skills location is `.agents/skills/`.
 
 ```bash
@@ -133,6 +140,7 @@ symlink skills .my-custom-skills/
 ```
 
 ### Rules Directories
+
 The recommended canonical rules location is `.agent-config/rules/`.
 
 ```bash
@@ -151,24 +159,31 @@ symlink rules all
 ## Management Commands
 
 ### Inspect Links
+
 Inspect whether a file is a symlink, verify its destination, and check if it is broken:
+
 ```bash
 symlink inspect CLAUDE.md
 ```
 
 JSON output:
+
 ```bash
 symlink inspect CLAUDE.md --json
 ```
 
 ### Safely Unlink
+
 Remove a symbolic link without ever deleting or modifying the source file:
+
 ```bash
 symlink unlink CLAUDE.md
 ```
 
 ### Environment Doctor
+
 Check runtime version, operating system symlink capabilities, Git repository status, and link health:
+
 ```bash
 symlink doctor
 ```
@@ -177,15 +192,15 @@ symlink doctor
 
 ## Command Reference
 
-| Command | Description |
-| :--- | :--- |
-| `symlink [source] [target]` | Create a symbolic link (or launch interactive mode if no arguments) |
-| `symlink preset <agent\|all>` | Apply presets for specific agents or all compatible agents |
-| `symlink skills <target\|agent>` | Link canonical skills (`.agents/skills`) to target |
-| `symlink rules <target\|agent>` | Link canonical rules (`.agent-config/rules`) to target |
-| `symlink inspect <target>` | Inspect target path and diagnose symlink validity |
-| `symlink unlink <target>` | Safely remove symbolic link without touching source |
-| `symlink doctor` | Run system and environment health checks |
+| Command                          | Description                                                         |
+| :------------------------------- | :------------------------------------------------------------------ |
+| `symlink [source] [target]`      | Create a symbolic link (or launch interactive mode if no arguments) |
+| `symlink preset <agent\|all>`    | Apply presets for specific agents or all compatible agents          |
+| `symlink skills <target\|agent>` | Link canonical skills (`.agents/skills`) to target                  |
+| `symlink rules <target\|agent>`  | Link canonical rules (`.agent-config/rules`) to target              |
+| `symlink inspect <target>`       | Inspect target path and diagnose symlink validity                   |
+| `symlink unlink <target>`        | Safely remove symbolic link without touching source                 |
+| `symlink doctor`                 | Run system and environment health checks                            |
 
 ### Global Flags
 
@@ -206,6 +221,7 @@ symlink doctor
 Windows is a first-class supported platform.
 
 To create symbolic links on Windows without administrator prompts:
+
 1. Enable **Developer Mode** in Windows Settings (`Settings > System > For developers > Developer Mode`).
 2. Alternatively, run in an elevated terminal with `SeCreateSymbolicLinkPrivilege`.
 
@@ -227,7 +243,7 @@ All relative links generated by `symlink` use POSIX forward slashes (`/`), ensur
 
 ```bash
 # Clone repository
-git clone https://github.com/agent-symlink/symlink.git
+git clone https://github.com/WesleyMaik/agent-symlink.git
 cd symlink
 
 # Install dependencies

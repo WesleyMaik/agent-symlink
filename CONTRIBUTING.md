@@ -16,17 +16,20 @@ Thank you for your interest in contributing to Symlink CLI! We are committed to 
 ## Getting Started
 
 1. Fork and clone the repository:
+
    ```bash
-   git clone https://github.com/agent-symlink/symlink.git
+   git clone https://github.com/WesleyMaik/agent-symlink.git
    cd symlink
    ```
 
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Build the project:
+
    ```bash
    pnpm build
    ```
