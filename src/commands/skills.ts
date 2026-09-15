@@ -1,7 +1,8 @@
 import pc from 'picocolors';
+import path from 'node:path';
 import { AGENT_REGISTRY, getAgent } from '../registry/agents.js';
 import { createLink } from '../core/linker.js';
-import type { LinkOptions, LinkResult } from '../types/index.js';
+import type { AgentLinkResult, LinkOptions, LinkResult } from '../types/index.js';
 import { SymlinkError } from '../utils/errors.js';
 
 export interface CliSkillsOptions extends LinkOptions {
@@ -27,7 +28,7 @@ export async function handleSkillsCommand(
   let resolvedTarget = targetOrAgent;
 
   if (agent) {
-    if (agent.skills?.nativeSkillsDir) {
+    if (agent.skills?.nativeSkillsDir && usesNativeSkillsSource(canonicalSource, options.cwd)) {
       if (options.json) {
         console.log(
           JSON.stringify(
@@ -42,7 +43,9 @@ export async function handleSkillsCommand(
           )
         );
       } else {
-        console.log(`${pc.cyan('ℹ')} ${agent.name} natively supports .agents/skills. No symlink needed.`);
+        console.log(
+          `${pc.cyan('ℹ')} ${agent.name} natively supports .agents/skills. No symlink needed.`
+        );
       }
       return 0;
     }
@@ -83,13 +86,18 @@ export async function handleSkillsCommand(
   }
 }
 
-async function handleAllSkills(canonicalSource: string, options: CliSkillsOptions): Promise<number> {
+async function handleAllSkills(
+  canonicalSource: string,
+  options: CliSkillsOptions
+): Promise<number> {
   const agentsWithSkills = AGENT_REGISTRY.filter(
-    (a) => a.skills && !a.skills.nativeSkillsDir
+    (a) =>
+      a.skills &&
+      (!a.skills.nativeSkillsDir || !usesNativeSkillsSource(canonicalSource, options.cwd))
   );
 
   let hasErrors = false;
-  const results: LinkResult[] = [];
+  const results: AgentLinkResult[] = [];
 
   if (!options.json) {
     console.log(pc.bold(`Linking canonical skills (${canonicalSource}) to agents...\n`));
@@ -99,21 +107,30 @@ async function handleAllSkills(canonicalSource: string, options: CliSkillsOption
     const target = agent.skills!.target;
     try {
       const result = await createLink(canonicalSource, target, options);
-      results.push(result);
+      results.push({ agentId: agent.id, agentName: agent.name, ...result });
       if (!options.json) {
         if (result.status === 'already_linked') {
-          console.log(`${pc.blue('ℹ')} ${pc.bold(agent.name.padEnd(20))} ${target} already points to ${result.linkValue}`);
+          console.log(
+            `${pc.blue('ℹ')} ${pc.bold(agent.name.padEnd(20))} ${target} already points to ${result.linkValue}`
+          );
         } else if (result.status === 'created') {
-          console.log(`${pc.green('✓')} ${pc.bold(agent.name.padEnd(20))} ${target} -> ${result.linkValue}`);
+          console.log(
+            `${pc.green('✓')} ${pc.bold(agent.name.padEnd(20))} ${target} -> ${result.linkValue}`
+          );
         } else if (result.status === 'replaced') {
-          console.log(`${pc.yellow('✓')} ${pc.bold(agent.name.padEnd(20))} ${target} -> ${result.linkValue} (replaced)`);
+          console.log(
+            `${pc.yellow('✓')} ${pc.bold(agent.name.padEnd(20))} ${target} -> ${result.linkValue} (replaced)`
+          );
         } else if (result.status === 'would_create' || result.status === 'would_replace') {
-          console.log(`${pc.magenta('[dry-run]')} ${pc.bold(agent.name.padEnd(20))} ${target} -> ${result.linkValue}`);
+          console.log(
+            `${pc.magenta('[dry-run]')} ${pc.bold(agent.name.padEnd(20))} ${target} -> ${result.linkValue}`
+          );
         }
       }
     } catch (error: unknown) {
       hasErrors = true;
       const message = error instanceof Error ? error.message : String(error);
+      results.push({ agentId: agent.id, agentName: agent.name, target, error: message });
       if (!options.json) {
         console.error(`${pc.red('✗')} ${pc.bold(agent.name.padEnd(20))} Error: ${message}`);
       }
@@ -127,14 +144,26 @@ async function handleAllSkills(canonicalSource: string, options: CliSkillsOption
   return hasErrors ? 1 : 0;
 }
 
+function usesNativeSkillsSource(source: string, cwd = process.cwd()): boolean {
+  return path.relative(path.resolve(cwd, source), path.resolve(cwd, '.agents/skills')) === '';
+}
+
 function printSkillResult(result: LinkResult, source: string, target: string): void {
   if (result.status === 'already_linked') {
-    console.log(`${pc.blue('ℹ')} Skills directory ${pc.bold(target)} already points to ${pc.cyan(result.linkValue)}`);
+    console.log(
+      `${pc.blue('ℹ')} Skills directory ${pc.bold(target)} already points to ${pc.cyan(result.linkValue)}`
+    );
   } else if (result.status === 'created') {
-    console.log(`${pc.green('✓')} Linked skills: ${pc.bold(target)} -> ${pc.cyan(result.linkValue)} ${pc.dim(`(from ${source})`)}`);
+    console.log(
+      `${pc.green('✓')} Linked skills: ${pc.bold(target)} -> ${pc.cyan(result.linkValue)} ${pc.dim(`(from ${source})`)}`
+    );
   } else if (result.status === 'replaced') {
-    console.log(`${pc.yellow('✓')} Replaced skills link: ${pc.bold(target)} -> ${pc.cyan(result.linkValue)} ${pc.dim(`(from ${source})`)}`);
+    console.log(
+      `${pc.yellow('✓')} Replaced skills link: ${pc.bold(target)} -> ${pc.cyan(result.linkValue)} ${pc.dim(`(from ${source})`)}`
+    );
   } else if (result.status === 'would_create' || result.status === 'would_replace') {
-    console.log(`${pc.magenta('[dry-run]')} Would link skills: ${pc.bold(target)} -> ${pc.cyan(result.linkValue)} ${pc.dim(`(from ${source})`)}`);
+    console.log(
+      `${pc.magenta('[dry-run]')} Would link skills: ${pc.bold(target)} -> ${pc.cyan(result.linkValue)} ${pc.dim(`(from ${source})`)}`
+    );
   }
 }

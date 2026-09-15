@@ -14,10 +14,11 @@ export async function handleInspectCommand(
   options: CliInspectOptions
 ): Promise<number> {
   const result = await inspectPath(target, { cwd: options.cwd });
+  const success = result.exists && result.status !== 'broken';
 
   if (options.json) {
-    console.log(JSON.stringify({ success: result.exists, ...result }, null, 2));
-    return result.exists ? 0 : 1;
+    console.log(JSON.stringify({ success, ...result }, null, 2));
+    return success ? 0 : 1;
   }
 
   if (!result.exists) {

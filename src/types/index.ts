@@ -7,12 +7,7 @@ export type LinkType = 'file' | 'dir' | 'junction';
  * Lifecycle status of a link operation.
  */
 export type LinkStatus =
-  | 'created'
-  | 'already_linked'
-  | 'replaced'
-  | 'would_create'
-  | 'would_replace'
-  | 'error';
+  'created' | 'already_linked' | 'replaced' | 'would_create' | 'would_replace' | 'error';
 
 /**
  * Options for creating symbolic links.
@@ -39,6 +34,18 @@ export interface LinkResult {
 }
 
 /**
+ * Per-agent outcome of a batch directory link operation.
+ */
+export type AgentLinkResult =
+  | (LinkResult & { readonly agentId: string; readonly agentName: string })
+  | {
+      readonly agentId: string;
+      readonly agentName: string;
+      readonly target: string;
+      readonly error: string;
+    };
+
+/**
  * Options for unlinking operations.
  */
 export interface UnlinkOptions {
@@ -60,12 +67,7 @@ export interface UnlinkResult {
 /**
  * Diagnostic status of an inspected path.
  */
-export type InspectStatus =
-  | 'valid'
-  | 'broken'
-  | 'regular_file'
-  | 'regular_dir'
-  | 'not_found';
+export type InspectStatus = 'valid' | 'broken' | 'regular_file' | 'regular_dir' | 'not_found';
 
 /**
  * Structured diagnostic information for an inspected path.

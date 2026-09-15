@@ -16,21 +16,24 @@ export async function handleUnlinkCommand(
 ): Promise<number> {
   try {
     const result = await removeLink(target, options);
+    const success = result.removed || (options.dryRun === true && result.wasLink);
 
     if (options.json) {
-      console.log(JSON.stringify({ success: result.removed, ...result }, null, 2));
-      return result.removed || options.dryRun ? 0 : 1;
+      console.log(JSON.stringify({ success, ...result }, null, 2));
+      return success ? 0 : 1;
     }
 
     if (result.removed) {
-      console.log(`${pc.green('✓')} Successfully unlinked ${pc.bold(target)}. Linked source remains untouched.`);
-    } else if (options.dryRun) {
+      console.log(
+        `${pc.green('✓')} Successfully unlinked ${pc.bold(target)}. Linked source remains untouched.`
+      );
+    } else if (options.dryRun && result.wasLink) {
       console.log(`${pc.magenta('[dry-run]')} Would remove symlink at ${pc.bold(target)}.`);
     } else {
       console.log(pc.yellow(result.message ?? `Nothing unlinked at ${target}.`));
     }
 
-    return 0;
+    return success ? 0 : 1;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
 
