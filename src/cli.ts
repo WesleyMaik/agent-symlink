@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import pc from 'picocolors';
 import { getPackageVersion } from './utils/version.js';
 import { handleLinkCommand, type CliLinkOptions } from './commands/link.js';
+import { handlePresetCommand, type CliPresetOptions } from './commands/preset.js';
 import { runInteractive } from './interactive/runner.js';
 
 const program = new Command();
@@ -13,8 +14,17 @@ program
   .description('Create and manage symbolic links for AI agent instructions, skills, and rules.')
   .version(version, '-v, --version', 'Show CLI version')
   .helpOption('-h, --help', 'Show help information')
-  .argument('[source]', 'Source file or directory to link from')
-  .argument('[target]', 'Target path where the symlink will be created')
+  .option('-f, --force', 'Replace an existing target if it already exists')
+  .option('-d, --dry-run', 'Show what would be created without modifying the filesystem')
+  .option('-a, --absolute', 'Create an absolute symlink instead of the default relative link')
+  .option('--allow-dangling', 'Allow a source path that does not currently exist')
+  .option('--cwd <path>', 'Resolve relative paths from another working directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .option('--verbose', 'Display path resolution and diagnostic information');
+
+program
+  .command('link [source] [target]', { isDefault: true })
+  .description('Create a symbolic link from source to target (default command)')
   .option('-f, --force', 'Replace an existing target if it already exists')
   .option('-d, --dry-run', 'Show what would be created without modifying the filesystem')
   .option('-a, --absolute', 'Create an absolute symlink instead of the default relative link')
@@ -22,8 +32,9 @@ program
   .option('--cwd <path>', 'Resolve relative paths from another working directory')
   .option('--json', 'Return machine-readable JSON output')
   .option('--verbose', 'Display path resolution and diagnostic information')
-  .action(async (source?: string, target?: string, options?: CliLinkOptions) => {
-    const opts: CliLinkOptions = options ?? {};
+  .action(async (source?: string, target?: string, cmdOptions?: CliLinkOptions) => {
+    const globalOptions = program.opts<CliLinkOptions>();
+    const opts: CliLinkOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
 
     if (!source && !target) {
       if (process.stdin.isTTY && !opts.json) {
@@ -52,6 +63,25 @@ program
     }
 
     const exitCode = await handleLinkCommand(source, target, opts);
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  });
+
+program
+  .command('preset <agent>')
+  .description('Apply an agent preset (or "all" to link all compatible agents)')
+  .option('-f, --force', 'Replace an existing target if it already exists')
+  .option('-d, --dry-run', 'Show what would be created without modifying the filesystem')
+  .option('-a, --absolute', 'Create an absolute symlink instead of the default relative link')
+  .option('--allow-dangling', 'Allow a source path that does not currently exist')
+  .option('--cwd <path>', 'Resolve relative paths from another working directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .option('--verbose', 'Display path resolution and diagnostic information')
+  .action(async (agent: string, cmdOptions?: CliPresetOptions) => {
+    const globalOptions = program.opts<CliPresetOptions>();
+    const opts: CliPresetOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
+    const exitCode = await handlePresetCommand(agent, opts);
     if (exitCode !== 0) {
       process.exitCode = exitCode;
     }
