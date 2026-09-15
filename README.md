@@ -39,20 +39,6 @@ Instead of duplicating instruction files and manually synchronizing them across 
 
 ## Installation
 
-The project is in initial development (`0.1.0`) and is awaiting its first npm publication. Run it from a local checkout:
-
-```bash
-git clone https://github.com/WesleyMaik/agent-symlink.git
-cd agent-symlink
-pnpm install
-pnpm build
-node dist/cli.js --help
-```
-
-For local use, replace `symlink` in the examples below with `node /path/to/agent-symlink/dist/cli.js`, or run `pnpm link --global` after building.
-
-After the first npm publication, these installation commands will be available:
-
 ```bash
 # Global installation via pnpm
 pnpm add -g @agent-symlink/cli
@@ -63,6 +49,18 @@ npm install -g @agent-symlink/cli
 # Run directly via npx / pnpx
 npx @agent-symlink/cli --help
 ```
+
+Or clone locally the project:
+
+```bash
+git clone https://github.com/WesleyMaik/agent-symlink.git
+cd agent-symlink
+pnpm install
+pnpm build
+node dist/cli.js --help
+```
+
+For local use, replace `symlink` in the examples above with `node /dist/cli.js`, or run `pnpm link --global` after building.
 
 ---
 
