@@ -4,6 +4,8 @@ import pc from 'picocolors';
 import { getPackageVersion } from './utils/version.js';
 import { handleLinkCommand, type CliLinkOptions } from './commands/link.js';
 import { handlePresetCommand, type CliPresetOptions } from './commands/preset.js';
+import { handleSkillsCommand, type CliSkillsOptions } from './commands/skills.js';
+import { handleRulesCommand, type CliRulesOptions } from './commands/rules.js';
 import { runInteractive } from './interactive/runner.js';
 
 const program = new Command();
@@ -82,6 +84,46 @@ program
     const globalOptions = program.opts<CliPresetOptions>();
     const opts: CliPresetOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
     const exitCode = await handlePresetCommand(agent, opts);
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  });
+
+program
+  .command('skills <target>')
+  .description('Link canonical skills directory to target agent or directory')
+  .option('-s, --source <path>', 'Canonical skills source directory (default: .agents/skills)')
+  .option('-f, --force', 'Replace an existing target if it already exists')
+  .option('-d, --dry-run', 'Show what would be created without modifying the filesystem')
+  .option('-a, --absolute', 'Create an absolute symlink instead of the default relative link')
+  .option('--allow-dangling', 'Allow a source path that does not currently exist')
+  .option('--cwd <path>', 'Resolve relative paths from another working directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .option('--verbose', 'Display path resolution and diagnostic information')
+  .action(async (target: string, cmdOptions?: CliSkillsOptions) => {
+    const globalOptions = program.opts<CliSkillsOptions>();
+    const opts: CliSkillsOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
+    const exitCode = await handleSkillsCommand(target, opts);
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  });
+
+program
+  .command('rules <target>')
+  .description('Link canonical rules directory to target agent or directory')
+  .option('-s, --source <path>', 'Canonical rules source directory (default: .agent-config/rules)')
+  .option('-f, --force', 'Replace an existing target if it already exists')
+  .option('-d, --dry-run', 'Show what would be created without modifying the filesystem')
+  .option('-a, --absolute', 'Create an absolute symlink instead of the default relative link')
+  .option('--allow-dangling', 'Allow a source path that does not currently exist')
+  .option('--cwd <path>', 'Resolve relative paths from another working directory')
+  .option('--json', 'Return machine-readable JSON output')
+  .option('--verbose', 'Display path resolution and diagnostic information')
+  .action(async (target: string, cmdOptions?: CliRulesOptions) => {
+    const globalOptions = program.opts<CliRulesOptions>();
+    const opts: CliRulesOptions = { ...globalOptions, ...(cmdOptions ?? {}) };
+    const exitCode = await handleRulesCommand(target, opts);
     if (exitCode !== 0) {
       process.exitCode = exitCode;
     }
