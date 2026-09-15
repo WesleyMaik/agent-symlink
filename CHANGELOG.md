@@ -3,7 +3,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.1 (2026-09-15)
+
+### Documentation & Project Setup
+
+- Update README with global and local installation instructions and CLI quickstart guide.
+- Add repository guideline symlinks for supported agent configurations (.amazonq, .continue, .github/copilot-instructions.md, CLAUDE.md, GEMINI.md).
+
+## 0.1.0 (2026-09-15)
 
 ### Fixes
 
